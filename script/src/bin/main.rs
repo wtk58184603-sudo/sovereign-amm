@@ -1,97 +1,45 @@
-//! An end-to-end example of using the SP1 SDK to generate a proof of a program that can be executed
-//! or have a core proof generated.
-//!
-//! You can run this script using the following command:
-//! ```shell
-//! RUST_LOG=info cargo run --release -- --execute
-//! ```
-//! or
-//! ```shell
-//! RUST_LOG=info cargo run --release -- --prove
-//! ```
-
-use alloy_sol_types::SolType;
-use clap::Parser;
-use fibonacci_lib::PublicValuesStruct;
+//! Tower System 發射器：LVR 證明鍛造與 ABI 序列化
 use sp1_sdk::{
-    blocking::{ProveRequest, Prover, ProverClient},
-    include_elf, Elf, ProvingKey, SP1Stdin,
+    blocking::{ProverClient, Prover, ProveRequest},
+    include_elf, utils, SP1Stdin,
 };
-
-/// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
-const FIBONACCI_ELF: Elf = include_elf!("fibonacci-program");
-
-/// The arguments for the command.
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    #[arg(long)]
-    execute: bool,
-
-    #[arg(long)]
-    prove: bool,
-
-    #[arg(long, default_value = "20")]
-    n: u32,
-}
+use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
-    // Setup the logger.
-    sp1_sdk::utils::setup_logger();
-    dotenv::dotenv().ok();
+    utils::setup_logger();
 
-    // Parse the command line arguments.
-    let args = Args::parse();
-
-    if args.execute == args.prove {
-        eprintln!("Error: You must specify either --execute or --prove");
-        std::process::exit(1);
-    }
-
-    // Setup the prover client.
     let client = ProverClient::from_env();
+    let elf = include_elf!("fibonacci-program");
 
-    // Setup the inputs.
     let mut stdin = SP1Stdin::new();
-    stdin.write(&args.n);
+    let amm_price: u64 = 3000_000_000;
+    let oracle_price: u64 = 3050_000_000;
+    let base_fee: u64 = 300;
 
-    println!("n: {}", args.n);
+    stdin.write(&amm_price);
+    stdin.write(&oracle_price);
+    stdin.write(&base_fee);
 
-    if args.execute {
-        // Execute the program
-        let (output, report) = client.execute(FIBONACCI_ELF, stdin).run().unwrap();
-        println!("Program executed successfully.");
+    println!("Tower System 啟動：開始鍛造證明...");
+    let pk = client.setup(elf).expect("Setup 失敗！");
+    let proof = client.prove(&pk, stdin).run().expect("證明鍛造失敗！");
 
-        // Read the output.
-        let decoded = PublicValuesStruct::abi_decode(output.as_slice()).unwrap();
-        let PublicValuesStruct { n, a, b } = decoded;
-        println!("n: {}", n);
-        println!("a: {}", a);
-        println!("b: {}", b);
+    // =====================================================================
+    // ABI 序列化與時間戳提取
+    // =====================================================================
+    let public_values_bytes = proof.public_values.as_slice();
+    let mock_proof_bytes = vec![0xff; 32]; 
 
-        let (expected_a, expected_b) = fibonacci_lib::fibonacci(n);
-        assert_eq!(a, expected_a);
-        assert_eq!(b, expected_b);
-        println!("Values are correct!");
+    // 提取物理時間戳，為 Solidity 的 60 秒生命週期計時器提供起點
+    let current_timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
 
-        // Record the number of cycles executed.
-        println!("Number of cycles: {}", report.total_instruction_count());
-    } else {
-        // Setup the program for proving.
-        let pk = client.setup(FIBONACCI_ELF).expect("failed to setup elf");
-
-        // Generate the proof
-        let proof = client
-            .prove(&pk, stdin)
-            .run()
-            .expect("failed to generate proof");
-
-        println!("Successfully generated proof!");
-
-        // Verify the proof.
-        client
-            .verify(&proof, pk.verifying_key(), None)
-            .expect("failed to verify proof");
-        println!("Successfully verified proof!");
-    }
+    println!("\n=== Tower System 鏈上裝填彈藥 ===");
+    println!("請將以下參數直接複製到 Solidity 靶場中：");
+    println!("Public Values: 0x{}", hex::encode(public_values_bytes));
+    println!("Mock Proof:    0x{}", hex::encode(&mock_proof_bytes));
+    println!("Timestamp:     {}", current_timestamp);
+    println!("=================================");
 }

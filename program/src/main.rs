@@ -1,30 +1,25 @@
-//! A simple program that takes a number `n` as input, and writes the `n-1`th and `n`th fibonacci
-//! number as an output.
-
-// These two lines are necessary for the program to properly compile.
-//
-// Under the hood, we wrap your main function with some extra code so that it behaves properly
-// inside the zkVM.
+//! Tower System 真實大腦：LVR 防禦矩陣
 #![no_main]
 sp1_zkvm::entrypoint!(main);
 
-use alloy_sol_types::SolType;
-use fibonacci_lib::{fibonacci, PublicValuesStruct};
-
 pub fn main() {
-    // Read an input to the program.
-    //
-    // Behind the scenes, this compiles down to a custom system call which handles reading inputs
-    // from the prover.
-    let n = sp1_zkvm::io::read::<u32>();
+    // 1. 讀取發射器傳來的物理市場參數
+    let amm_price = sp1_zkvm::io::read::<u64>();
+    let oracle_price = sp1_zkvm::io::read::<u64>();
+    let base_fee = sp1_zkvm::io::read::<u64>();
 
-    // Compute the n'th fibonacci number using a function from the workspace lib crate.
-    let (a, b) = fibonacci(n);
+    // 2. 核心邏輯：計算絕對差值
+    let diff = if oracle_price > amm_price {
+        oracle_price - amm_price
+    } else {
+        amm_price - oracle_price
+    };
 
-    // Encode the public values of the program.
-    let bytes = PublicValuesStruct::abi_encode(&PublicValuesStruct { n, a, b });
+    // 3. 制定剝削費率：基礎費率 + 差價的萬分之一
+    let dynamic_fee = base_fee + (diff / 10000);
 
-    // Commit to the public values of the program. The final proof will have a commitment to all the
-    // bytes that were committed to.
-    sp1_zkvm::io::commit_slice(&bytes);
+    // 4. 將戰果原樣輸出，交給收割機
+    sp1_zkvm::io::commit(&amm_price);
+    sp1_zkvm::io::commit(&oracle_price);
+    sp1_zkvm::io::commit(&dynamic_fee);
 }

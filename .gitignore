@@ -17,3 +17,15 @@ pgo-data.profdata
 
 # Env
 .env
+
+
+# ==========================================
+# Sovereign AMM: Foundry 智能合約物理隔離
+# ==========================================
+out/
+cache/
+broadcast/
+.tmp/
+reports/
+*.key
+keystore/
