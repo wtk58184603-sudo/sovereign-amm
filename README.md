@@ -1,89 +1,46 @@
-# SP1 Project Template
+# Sovereign AMM: ZK-LVR Interceptor Protocol (Phase 2)
 
-This is a template for creating an end-to-end [SP1](https://github.com/succinctlabs/sp1) project
-that can generate a proof of any RISC-V program.
+### [Vision]
+建立不以人的意志为转移的流动性主权。通过 ZK-Proof 物理拦截无常损失 (LVR)，将原本流向套利机器人的利润，重新分配给主权金库、算力节点与流动性提供者。
 
-## Requirements
+**我们不接受外部投资，只接受算力贡献与流动性锚定。**
 
-- [Rust](https://rustup.rs/)
-- [SP1](https://docs.succinct.xyz/docs/sp1/getting-started/install)
+---
 
-## Running the Project
+## 1. 核心机制：LVR 物理拦截器
+在以太坊黑暗森林中，CEX-DEX 的价格流转存在天然的凹性（风险无限）。Sovereign AMM 嵌入了一层基于 ZK-STARK 的动态费率层：
+- **监控端 (The Brain):** 基于 SP1 运行的 LVR 实时估算引擎。
+- **拦截端 (The Harvester):** 强制执行 60 秒生命周期的 ZK-Fee 证明。
+- **分发端 (The Router):** 物理剥离套利利得，强制执行 [43/10/47] 分润法则。
 
-There are 3 main ways to run this project: execute a program, generate a core proof, and
-generate an EVM-compatible proof.
+## 2. 自动化分润协议 (Distribution Logic)
+系统捕获的每一笔拦截税（ZK-Tax），将严格按以下布林逻辑执行分账，无人工干预空间：
 
-### Build the Program
+| 角色 | 占比 | 动力来源 | 结算方式 |
+| :--- | :--- | :--- | :--- |
+| **主权金库 (Treasury)** | **43%** | 协议所有权与技术溢价 | 实时入库 |
+| **证明者 (Provers)** | **10%** | 提供 Groth16 压缩证明的算力 | 任务竞价结算 |
+| **流动性 (LP Pool)** | **47%** | 提供底层兑换深度 | 注入池内增加资产净值 |
 
-The program is automatically built through `script/build.rs` when the script is built.
+## 3. 参与者指南 (The Tender)
 
-### Execute the Program
+### A. 算力节点 (For Miners)
+你不需要理解业务逻辑，你只需要提供算力。
+- **任务:** 监听 `Harvester.sol` 的事件，提交满足 `MAX_PROOF_AGE` 的有效证明。
+- **收益:** 每一笔被你证明的拦截交易，其 10% 的税款将直接打入你的地址。
+- **竞争:** 只有第一个提交有效证明的节点将获得悬赏。
 
-To run the program without generating a proof:
+### B. 流动性门客 (For Alpha LPs)
+我们不提供利息，我们提供“防御性返佣”。
+- **风险:** 承担正常的市场波动。
+- **收益:** 拦截掉的 LVR 价值的 47% 将直接回补给你的持仓。
+- **条件:** 首批测试仅开放特定 Pair 的白名单接入。
 
-```sh
-cd script
-cargo run --release -- --execute
-```
+## 4. 物理进度追踪
+- [x] Phase 1: 本地风洞测试 (0 Warnings / ZK-LVR 逻辑闭环)
+- [x] Phase 2: 分润法则注入 (Contracts Update & Security Isolation)
+- [ ] Phase 3: 算力悬赏网络开启 (Cloud Proving Integration)
 
-This will execute the program and display the output.
-
-### Generate an SP1 Core Proof
-
-To generate an SP1 [core proof](https://docs.succinct.xyz/docs/next/sp1/generating-proofs/proof-types#core-default) for your program:
-
-```sh
-cd script
-cargo run --release -- --prove
-```
-
-### Generate an EVM-Compatible Proof
-
-> [!WARNING]
-> You will need at least 16GB RAM to generate a Groth16 or PLONK proof. View the [SP1 docs](https://docs.succinct.xyz/docs/next/sp1/getting-started/hardware-requirements#local-proving) for more information.
-
-Generating a proof that is cheap to verify on the EVM (e.g. Groth16 or PLONK) is more intensive than generating a core proof.
-
-To generate a Groth16 proof:
-
-```sh
-cd script
-cargo run --release --bin evm -- --system groth16
-```
-
-To generate a PLONK proof:
-
-```sh
-cargo run --release --bin evm -- --system plonk
-```
-
-These commands will also generate fixtures that can be used to test the verification of SP1 proofs
-inside Solidity.
-
-### Retrieve the Verification Key
-
-To retrieve your `programVKey` for your on-chain contract, run the following command in `script`:
-
-```sh
-cargo run --release --bin vkey
-```
-
-## Using the Prover Network
-
-We highly recommend using the Succinct Prover Network for any non-trivial programs or benchmarking purposes. For more information, see the [quickstart guide](https://docs.succinct.xyz/docs/next/sp1/prover-network/quickstart).
-
-To get started, copy the example environment file:
-
-```sh
-cp .env.example .env
-```
-
-Then, set the `SP1_PROVER` environment variable to `network` and set the `NETWORK_PRIVATE_KEY`
-environment variable to your whitelisted private key.
-
-For example, to generate an EVM-compatible proof using the prover network, run the following
-command:
-
-```sh
-SP1_PROVER=network NETWORK_PRIVATE_KEY=... cargo run --release --bin evm
-```
+---
+**Status:** System Primed. 
+**Contact:** Sovereign Execution Agent (AI)
