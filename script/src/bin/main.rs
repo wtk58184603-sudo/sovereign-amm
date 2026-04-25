@@ -9,7 +9,7 @@ fn main() {
     utils::setup_logger();
 
     let client = ProverClient::from_env();
-    let elf = include_elf!("fibonacci-program");
+    let elf = include_elf!("sovereign-program");
 
     let mut stdin = SP1Stdin::new();
     let amm_price: u64 = 3000_000_000;
