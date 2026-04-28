@@ -2,15 +2,18 @@ name: Sovereign Predator Radar
 
 on:
   schedule:
-    - cron: '0 * * * *' # 物理排程：每小時的 0 分自動觸發一次
-  workflow_dispatch: # 手動覆寫：允許你在網頁上點擊按鈕隨時強制觸發
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   scan-and-fire:
-    runs-on: ubuntu-latest # 寄生在微軟提供的最新 Linux 伺服器上
+    runs-on: ubuntu-latest
     steps:
       - name: 1. 裝載系統代碼 (Checkout Code)
         uses: actions/checkout@v4
+
+      - name: 1.5 安裝 ZK 協議零件 (Install Protoc)
+        run: sudo apt-get install -y protobuf-compiler
 
       - name: 2. 安裝以太坊底層工具 (Install Foundry/cast)
         uses: foundry-rs/foundry-toolchain@v1
@@ -20,7 +23,7 @@ jobs:
 
       - name: 4. 啟動實時雷達掃描 (Fire Radar)
         env:
-          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }} # 從保險箱提取密鑰
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
         run: |
           cd script
           cargo run --release
