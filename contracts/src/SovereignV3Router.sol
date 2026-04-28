@@ -31,15 +31,15 @@ contract SovereignV3Router {
         uint256 /* amountOutMinimum */ 
     ) external returns (uint256 amountOut) {
         
-        // 1. 获取 ZK 大脑裁决结果 (假设为 5300 基点，即 53%)
+       // 1. 获取 ZK 大脑裁决结果
         uint256 currentZkTaxRate = harvester.currentDynamicFee();
         require(block.timestamp - harvester.lastUpdateTimestamp() <= 60, "SYSTEM HALTED: ZK Fee is outdated.");
 
         // 2. 物理分账参数校准 (以 10000 为基数)
-        // 即使 ZK 裁决费率为 53%，我们也在此执行主权定义的二次分配
-        uint256 treasuryShare = (amountIn * 4300) / 10000; // 43% 主权抽成
-        uint256 proverReward = (amountIn * 1000) / 10000;  // 10% 算力悬赏
-        uint256 poolAmount = amountIn - treasuryShare - proverReward; // 剩余 47% 注入池
+        // 强制变量注入：彻底废弃 43% 死数字，使用 ZK 实时计算出的动态税率
+        uint256 treasuryShare = (amountIn * currentZkTaxRate) / 10000; 
+        uint256 proverReward = (amountIn * 1000) / 10000;  // 10% 算力悬赏不变
+        uint256 poolAmount = amountIn - treasuryShare - proverReward; // 剩余兜底注入池
 
         // 3. 物理拉取：全额捕获用户资产
         bool successIn = IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
