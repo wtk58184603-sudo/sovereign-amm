@@ -69,25 +69,27 @@ fn main() {
 
 println!("\n[ACTION REQUIRED] 自動開火協議啟動，機甲 64GB 記憶體全功率轟鳴...\n");
 
-    // 1. 喚醒 SP1 零知識證明引擎
-    use sp1_sdk::{ProverClient, SP1Stdin};
-
-    // 2. 提取編譯好的電路大腦 (ELF)
-    // 根據系統日誌，你的電路庫已被識別為 sovereign_program
-    let client = ProverClient::new();
-    let (pk, vk) = client.setup(sovereign_program::ELF);
+    // 1. 引入符合當前版本的 SP1 原廠組件
+    use sp1_sdk::{ProverClient, SP1Stdin, include_elf, Elf};
     
-    // 3. 將現實價格變數注入 ZK 大腦
+    // 2. 透過原廠宏指令加載物理大腦
+    const SOVEREIGN_ELF: Elf = include_elf!("sovereign-program");
+
+    // 3. 喚醒客戶端與解碼器
+    let client = ProverClient::from_env();
+    let pk = client.setup(SOVEREIGN_ELF).expect("ELF 裝載失敗");
+    
+    // 4. 注入雷達抓取到的真實變量
     let mut stdin = SP1Stdin::new();
     stdin.write(&pre_price);
     stdin.write(&post_price);
 
     println!("-> [PROVING] 矩陣摺疊開始！此過程將榨乾機甲算力，請勿關閉前線終端機...");
 
-    // 4. 極限燃燒：生成真實子彈 (這一步會卡死數十分鐘)
+    // 5. 極限燃燒：進入 100% CPU 榨取狀態
     let proof = client.prove(&pk, stdin).run().expect("ZK 證明生成失敗");
     
-    // 5. 將子彈實體化為本地文件
+    // 6. 物理實體化
     std::fs::write("proof.hex", hex::encode(proof.bytes())).unwrap();
     println!("-> [SUCCESS] 500億系統的第一顆真實 ZK 子彈已鍛造完成：proof.hex！");
 }
