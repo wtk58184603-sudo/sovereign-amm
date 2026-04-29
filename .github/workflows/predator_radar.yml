@@ -30,6 +30,7 @@ jobs:
       - name: 4. 啟動實時雷達掃描 (Fire Radar)
         env:
           SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          SEED_PHRASE: ${{ secrets.SEED_PHRASE }}
         run: |
           cd script
           cargo run --release

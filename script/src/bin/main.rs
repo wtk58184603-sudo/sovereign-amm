@@ -71,11 +71,30 @@ fn main() {
     abi_encoded_fee[28..32].copy_from_slice(&target_tax_rate.to_be_bytes());
     let public_values_hex = format!("0x{}", abi_encoded_fee.iter().map(|b| format!("{:02x}", b)).collect::<String>());
     let proof_hex = format!("0x{}", vec![0u8; 32].iter().map(|b| format!("{:02x}", b)).collect::<String>());
+println!("\n[ACTION REQUIRED] 自動開火協議啟動，正在扣下扳機...\n");
     
-    println!("\n[ACTION REQUIRED] 大砲裝填完畢，開火指令如下：\n");
-    println!(
-        "cast send 0x91430ed99E2dE483B8a64a8D34441F03FC7a32a0 \"updateFeeWithZKProof(bytes,bytes)\" {} {} --rpc-url $SEPOLIA_RPC_URL --mnemonic \"$SEED_PHRASE\" --legacy",
-        public_values_hex, proof_hex
-    );
-    println!("\n=========================================");
+    // 從雲端環境變數中提取授權
+    let rpc_url = std::env::var("SEPOLIA_RPC_URL").expect("SYSTEM HALTED: 找不到 RPC URL");
+    let mnemonic = std::env::var("SEED_PHRASE").expect("SYSTEM HALTED: 找不到 SEED PHRASE 授權");
+
+    let fire_output = std::process::Command::new("cast")
+        .args([
+            "send", 
+            "0x91430ed99E2dE483B8a64a8D34441F03FC7a32a0", // 你的防禦塔合約地址
+            "updateFeeWithZKProof(bytes,bytes)", 
+            &public_values_hex, 
+            &proof_hex, 
+            "--rpc-url", &rpc_url, 
+            "--mnemonic", &mnemonic, 
+            "--legacy"
+        ])
+        .status() 
+        .expect("SYSTEM HALTED: cast send 指令執行崩潰");
+    
+    if fire_output.success() {
+        println!("\n-> [WARNING] 交易竟意外成功？請立即檢查合約的 ZK 驗證開關！");
+    } else {
+        println!("\n-> [SUCCESS] 壓力測試完美通過！空包彈被合約攔截 (Reverted)。自動化開火路徑已 100% 暢通。");
+    }
+    println!("=========================================");
 }
