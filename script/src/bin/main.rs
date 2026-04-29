@@ -67,34 +67,27 @@ fn main() {
         baseline_tax_rate
     };
 
-    let mut abi_encoded_fee = vec![0u8; 32];
-    abi_encoded_fee[28..32].copy_from_slice(&target_tax_rate.to_be_bytes());
-    let public_values_hex = format!("0x{}", abi_encoded_fee.iter().map(|b| format!("{:02x}", b)).collect::<String>());
-    let proof_hex = format!("0x{}", vec![0u8; 32].iter().map(|b| format!("{:02x}", b)).collect::<String>());
-println!("\n[ACTION REQUIRED] 自動開火協議啟動，正在扣下扳機...\n");
-    
-    // 從雲端環境變數中提取授權
-    let rpc_url = std::env::var("SEPOLIA_RPC_URL").expect("SYSTEM HALTED: 找不到 RPC URL");
-    let mnemonic = std::env::var("SEED_PHRASE").expect("SYSTEM HALTED: 找不到 SEED PHRASE 授權");
+println!("\n[ACTION REQUIRED] 自動開火協議啟動，機甲 64GB 記憶體全功率轟鳴...\n");
 
-    let fire_output = std::process::Command::new("cast")
-        .args([
-            "send", 
-            "0x91430ed99E2dE483B8a64a8D34441F03FC7a32a0", // 你的防禦塔合約地址
-            "updateFeeWithZKProof(bytes,bytes)", 
-            &public_values_hex, 
-            &proof_hex, 
-            "--rpc-url", &rpc_url, 
-            "--mnemonic", &mnemonic, 
-            "--legacy"
-        ])
-        .status() 
-        .expect("SYSTEM HALTED: cast send 指令執行崩潰");
+    // 1. 喚醒 SP1 零知識證明引擎
+    use sp1_sdk::{ProverClient, SP1Stdin};
+
+    // 2. 提取編譯好的電路大腦 (ELF)
+    // 根據系統日誌，你的電路庫已被識別為 sovereign_program
+    let client = ProverClient::new();
+    let (pk, vk) = client.setup(sovereign_program::ELF);
     
-    if fire_output.success() {
-        println!("\n-> [WARNING] 交易竟意外成功？請立即檢查合約的 ZK 驗證開關！");
-    } else {
-        println!("\n-> [SUCCESS] 壓力測試完美通過！空包彈被合約攔截 (Reverted)。自動化開火路徑已 100% 暢通。");
-    }
-    println!("=========================================");
+    // 3. 將現實價格變數注入 ZK 大腦
+    let mut stdin = SP1Stdin::new();
+    stdin.write(&pre_price);
+    stdin.write(&post_price);
+
+    println!("-> [PROVING] 矩陣摺疊開始！此過程將榨乾機甲算力，請勿關閉前線終端機...");
+
+    // 4. 極限燃燒：生成真實子彈 (這一步會卡死數十分鐘)
+    let proof = client.prove(&pk, stdin).run().expect("ZK 證明生成失敗");
+    
+    // 5. 將子彈實體化為本地文件
+    std::fs::write("proof.hex", hex::encode(proof.bytes())).unwrap();
+    println!("-> [SUCCESS] 500億系統的第一顆真實 ZK 子彈已鍛造完成：proof.hex！");
 }
