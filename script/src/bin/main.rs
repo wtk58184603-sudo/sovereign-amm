@@ -70,7 +70,7 @@ fn main() {
 println!("\n[ACTION REQUIRED] 自動開火協議啟動，機甲 64GB 記憶體全功率轟鳴...\n");
 
     // 1. 引入符合當前版本的 SP1 原廠組件
-    use sp1_sdk::{blocking::{ProverClient, Prover}, SP1Stdin, include_elf, Elf};
+    use sp1_sdk::{blocking::{ProverClient, Prover, ProveRequest}, SP1Stdin, include_elf, Elf};
     
     // 2. 透過原廠宏指令加載物理大腦
     const SOVEREIGN_ELF: Elf = include_elf!("sovereign-program");
