@@ -71,14 +71,14 @@ async fn main() {
 println!("\n[ACTION REQUIRED] 自動開火協議啟動，機甲 64GB 記憶體全功率轟鳴...\n");
 
     // 1. 引入符合當前版本的 SP1 原廠組件
-    use sp1_sdk::{ProverClient, SP1Stdin, include_elf, Elf};
+    use sp1_sdk::{ProverClient, Prover, SP1Stdin, include_elf, Elf};
     
     // 2. 透過原廠宏指令加載物理大腦
     const SOVEREIGN_ELF: Elf = include_elf!("sovereign-program");
 
     // 3. 喚醒客戶端與解碼器
-    let client = ProverClient::from_env();
-    let (pk, vk) = client.setup(SOVEREIGN_ELF).await;
+    let client = ProverClient::from_env().await;
+    let (pk, vk) = client.setup(SOVEREIGN_ELF);
     
     // 4. 注入雷達抓取到的真實變量
     let mut stdin = SP1Stdin::new();
