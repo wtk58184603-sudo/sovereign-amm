@@ -12,22 +12,22 @@ jobs:
       - name: 1. 裝載系統代碼 (Checkout Code)
         uses: actions/checkout@v4
 
-      - name: 1.5 安裝 ZK 協議零件 (Install Protoc)
+      - name: 2. 安裝 ZK 協議零件 (Install Protoc)
         run: sudo apt-get install -y protobuf-compiler
 
-      - name: 1.8 安裝 Succinct 專用工具鏈 (Install Succinct Toolchain)
+      - name: 3. 喚醒 Rust 標準大腦 (Setup Rust)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 4. 安裝 Succinct 專用工具鏈 (Install Succinct Toolchain)
         run: |
           curl -L https://sp1.succinct.xyz | bash
           ~/.sp1/bin/sp1up
           echo "$HOME/.sp1/bin" >> $GITHUB_PATH
 
-      - name: 2. 安裝以太坊底層工具 (Install Foundry/cast)
+      - name: 5. 安裝以太坊底層工具 (Install Foundry/cast)
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: 3. 喚醒 Rust 掠奪大腦 (Setup Rust)
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: 4. 啟動實時雷達掃描 (Fire Radar)
+      - name: 6. 啟動實時雷達掃描 (Fire Radar)
         env:
           SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
           SEED_PHRASE: ${{ secrets.SEED_PHRASE }}
